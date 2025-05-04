@@ -1,0 +1,34 @@
+Containers & Network:
+	Type 1: Containers to Internet
+		Cointainers có thể kết nối với Internet (WWW - World Wide Web) 1 cách mặc định nếu như host machine (chứa containers) có kết nối tới Internet.
+
+	Type 2: Containers to Host Machine
+		Containers có thể kết nối tới Host machine (chứa containers) 1 cách mặc định. Docker đồng thời sử dụng domain "host.docker.internal" để kết nối tới Host Machine từ containers chạy trên Host Machine đó. Domain này sẽ được phân giải thành localhost IP của Host Machine theo góc nhìn của containers. Bản thân container cũng có localhost domain (127.0.0.1) tương tự như localhost domain của Host machine.
+		Khi kết nối từ Host Machine tới dịch vụ chạy trong container, container đó bắt buộc phải publish port dịch vụ đó ra để người dùng có thể connect được từ Host Machine.
+
+	Type 3: Containers to Containers
+		Mặc định các containers khi tạo ra (nếu không có chỉ định riêng về network) sẽ được gán 1 loại network drive mặc định là default bridge network (DBN). Các container trong cùng DBN sẽ có thể liên hệ với nhau thông qua IP (sử dụng lệnh "docker inspect <container-name>" để xem IP)
+
+		Ngoài ra, người dùng để thể tự tạo brigde network theo mong muốn (User-defined bridge network - UBN). các container trong cùng 1 UBN có thể liên hệ với nhau thông qua cả IP như DBN và thêm cả container name. 
+		Dùng lệnh sau để tạo UBN
+			docker network create <my-network>
+		Gán UBN vào container khi chạy bằng lệnh sau:
+			docker run -d --name web --network <my-network> nginx
+
+	Các container trong cùng 1 network (DBN or UBN) có thể kết nối với nhau thoải mái và không cần phải publish port services như khi kết nối giữa Host Machine và Containers.
+
+	Khi resolve domain to IP, docker sẽ không tác động trực tiếp vào source code của application kể cả khi domain đó được hardcode trong source code của application bên trong container. Docker sở hữu môi trường bao quanh container nên chỉ khi nào request dược gửi ra khỏi container thì docker mới bắt đầu resolve domain bên trong request đó để chuyển tiếp dữ liệu. Nếu request không ra khỏi container thì docker sẽ không tác động gì tới request đó.
+
+	Ngoài bridge thì docker cũng support nhiều loại drivers khác nhau:
+		- host: For standalone containers, isolation between container and host system is removed (i.e. they share localhost as a network)
+
+		- overlay: Multiple Docker daemons (i.e. Docker running on different machines) are able to connect with each other. Only works in "Swarm" mode which is a dated / almost deprecated way of connecting multiple containers
+
+		- macvlan: You can set a custom MAC address to a container - this address can then be used for communication with that container
+
+		- none: All networking is disabled.
+
+		- Third-party plugins: You can install third-party plugins which then may add all kinds of behaviors and functionalities
+
+	Bạn có thể lựa chọn loại driver cho network khi tạo network:
+		docker network create --driver <driver-option> <my-net>
